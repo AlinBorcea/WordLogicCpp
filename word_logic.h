@@ -2,6 +2,15 @@
 #define WORD_LOGIC_H
 
 #include <iostream>
+//#include <string.h>
+
+// Types of symbols in expression
+#define NO_TYPE 0
+#define ATOM_TYPE 1
+#define LEFT_PARENTHESES_TYPE 2
+#define RIGHT_PARENTHESES_TYPE 3
+#define CONNECTOR1_TYPE 4
+#define CONNECTOR2_TYPE 5
 
 // Connectors with one operand
 #define NEGATION 'n'
@@ -12,17 +21,11 @@
 #define IMPLICATION 'i'
 #define EQUIVALENCE 'e'
 
-// Types
-#define NO_TYPE 0
-#define ATOM_TYPE 1
-#define LEFT_PARENTHESES_TYPE 2
-#define RIGHT_PARENTHESES_TYPE 3
-#define CONNECTOR1_TYPE 4
-#define CONNECTOR2_TYPE 5
-
 class WordLogic {
     private:
         std::string expression;
+        WordLogic *leftNode;
+        WordLogic *rightNode;
         int rightParentheses;
         int leftParentheses;
         int atoms;
@@ -43,6 +46,38 @@ class WordLogic {
                 else if (elemType == CONNECTOR2_TYPE)
                     connectors++;
             }
+        }
+
+        void initTree() {
+            std::string left, right;
+            int doom = findDoom();
+
+            if (doom != -1) {
+                left = expression.substr(1, doom - 1);
+                right = expression.substr(doom + 1, expression.size() - 1 - doom);
+
+                leftNode = new WordLogic(left);
+                rightNode = new WordLogic(right);   
+            }
+        }
+
+        int findDoom() {
+            int parentheses = 0;
+            int elemType;
+
+            for (int i = 0; i < expression.size(); i++) {
+                elemType = elementType(expression[i]);
+
+                if (elemType == CONNECTOR2_TYPE && parentheses == 1) 
+                    return i;
+                
+                else if (elemType == LEFT_PARENTHESES_TYPE)
+                    parentheses++;
+
+                else if (elemType == RIGHT_PARENTHESES_TYPE)
+                    parentheses--;
+            }
+            return -1;
         }
 
         int elementType(char element) {
@@ -93,6 +128,9 @@ class WordLogic {
                         return false;
                     break;
 
+                case NO_TYPE:
+                    return false;
+
                 default:
                     return true;
 
@@ -100,30 +138,47 @@ class WordLogic {
             return true;
         }
 
+        void printNode(WordLogic *tree) {
+            if (tree)
+                std::cout << tree->expression << '\n';
+            else
+                return;
+
+            if (tree->leftNode)
+                printNode(tree->leftNode);
+
+            if (tree->rightNode)
+                printNode(tree->rightNode);
+        }
+
     public:
         WordLogic(std::string expr) {
             expression = expr;
+            leftNode = rightNode = 0;
             rightParentheses = 0;
             leftParentheses = 0;
             atoms = 0;
             negations = 0;
             connectors = 0;
             initData();
+            initTree();
         }
 
-        std::string getExpression() {
-            return expression;
-        }
-
+        /* Checks if the expression follows the general rules.
+         * return value: true if the expression folows the rules or false otherwise.
+         * leftParentheses must be equal to rightParentheses.
+         * The expression must not be empty and it must start with '(' and end with ')'.
+         * Neighboring characters must be a combo (see isCombo()).
+        */
         bool isExpression() {
-            // if we have no string or first element is not '(' or last element is not ')' then expression is not an expression
-            if (leftParentheses == rightParentheses == 0 && atoms == 1)
+
+            if (leftParentheses == 0 && rightParentheses == 0 && atoms == 1)
                 return true;
             
-            if (expression.empty() || expression.front() != '(' || expression.back() != ')')
-                return false;
-
             if (rightParentheses != leftParentheses)
+                return false;
+            
+            if (expression.empty() || expression.front() != '(' || expression.back() != ')')
                 return false;
             
             std::string::iterator it1, it2;
@@ -150,6 +205,11 @@ class WordLogic {
             return true;
         }
 
+        void printTree() {
+            std::cout << "Root -> " << expression << '\n';
+            printNode(leftNode);
+            printNode(rightNode);
+        }
 };
 
 #endif
