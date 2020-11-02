@@ -8,8 +8,8 @@ int main() {
     
     WordLogic *wordLogic = new WordLogic(str);
     std::cout << wordLogic->isExpression() << std::endl;
-    
     wordLogic->printTree();
-    free(wordLogic);
+    
+    delete wordLogic;
     return 0;
 }

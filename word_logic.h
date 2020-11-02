@@ -45,7 +45,7 @@ class WordLogic {
                 right = expression.substr(doom + 1, expression.size() - 1 - doom);
 
                 leftNode = new WordLogic(left);
-                rightNode = new WordLogic(right);   
+                rightNode = new WordLogic(right);
             }
         }
 
@@ -145,29 +145,39 @@ class WordLogic {
         }
 
         void printNodes(WordLogic *tree) {
-            if (!tree)
-                return;
-                
+            if (!tree) return;
             std::cout << tree->expression << '\n';
-            
-            if (tree->leftNode)
-                printNodes(tree->leftNode);
+            printNodes(tree->leftNode);
+            printNodes(tree->rightNode);
+        }
 
-            if (tree->rightNode)
-                printNodes(tree->rightNode);
+        void freeTree(WordLogic *tree) {
+            if (!tree) return;
+            freeTree(tree->leftNode);
+            freeTree(tree->rightNode);
+            delete tree;
         }
 
     public:
+
+        // Constructor.
         WordLogic(std::string expr) {
+            
             expression = expr;
             leftNode = rightNode = 0;
+
             rightParentheses = 0;
             leftParentheses = 0;
             atoms = 0;
             negations = 0;
             connectors = 0;
+            
             initExpressionProperties();
             initTree();
+        }
+
+        ~WordLogic() {
+            freeTree(this);
         }
 
         /* Checks if the expression follows the general rules.
