@@ -2,7 +2,6 @@
 #define WORD_LOGIC_H
 
 #include <iostream>
-//#include <string.h>
 
 // Types of symbols in expression
 #define NO_TYPE 0
@@ -23,16 +22,34 @@
 
 class WordLogic {
     private:
+
+        // Binary tree.
         std::string expression;
         WordLogic *leftNode;
         WordLogic *rightNode;
+
+        // Expression properties.
         int rightParentheses;
         int leftParentheses;
         int atoms;
         int negations;
         int connectors;
 
-        void initData() {
+        // Initializes the tree.
+        void initTree() {
+            std::string left, right;
+            int doom = findDoom();
+
+            if (doom != -1) {
+                left = expression.substr(1, doom - 1);
+                right = expression.substr(doom + 1, expression.size() - 1 - doom);
+
+                leftNode = new WordLogic(left);
+                rightNode = new WordLogic(right);   
+            }
+        }
+
+        void initExpressionProperties() {
             for (std::string::iterator it = expression.begin(); it != expression.end(); ++it) {
                 int elemType = elementType(*it);
                 if (elemType == ATOM_TYPE)
@@ -48,19 +65,7 @@ class WordLogic {
             }
         }
 
-        void initTree() {
-            std::string left, right;
-            int doom = findDoom();
-
-            if (doom != -1) {
-                left = expression.substr(1, doom - 1);
-                right = expression.substr(doom + 1, expression.size() - 1 - doom);
-
-                leftNode = new WordLogic(left);
-                rightNode = new WordLogic(right);   
-            }
-        }
-
+        // Finds the dominant connector.
         int findDoom() {
             int parentheses = 0;
             int elemType;
@@ -99,11 +104,12 @@ class WordLogic {
             return NO_TYPE;
         }
 
+        // Returns true if two consecutive elements follow order rules.
         bool isCombo(int currentType, int nextType) {
             
             switch (currentType) {
 
-                case LEFT_PARENTHESES_TYPE: // Case 1 '('
+                case LEFT_PARENTHESES_TYPE:
                     if (nextType == RIGHT_PARENTHESES_TYPE || nextType == CONNECTOR2_TYPE)
                         return false;
                     break;
@@ -138,17 +144,17 @@ class WordLogic {
             return true;
         }
 
-        void printNode(WordLogic *tree) {
-            if (tree)
-                std::cout << tree->expression << '\n';
-            else
+        void printNodes(WordLogic *tree) {
+            if (!tree)
                 return;
-
+                
+            std::cout << tree->expression << '\n';
+            
             if (tree->leftNode)
-                printNode(tree->leftNode);
+                printNodes(tree->leftNode);
 
             if (tree->rightNode)
-                printNode(tree->rightNode);
+                printNodes(tree->rightNode);
         }
 
     public:
@@ -160,7 +166,7 @@ class WordLogic {
             atoms = 0;
             negations = 0;
             connectors = 0;
-            initData();
+            initExpressionProperties();
             initTree();
         }
 
@@ -179,6 +185,9 @@ class WordLogic {
                 return false;
             
             if (expression.empty() || expression.front() != '(' || expression.back() != ')')
+                return false;
+
+            if (connectors + negations != leftParentheses)
                 return false;
             
             std::string::iterator it1, it2;
@@ -206,9 +215,7 @@ class WordLogic {
         }
 
         void printTree() {
-            std::cout << "Root -> " << expression << '\n';
-            printNode(leftNode);
-            printNode(rightNode);
+            printNodes(this);
         }
 };
 
