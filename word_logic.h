@@ -20,6 +20,14 @@
 #define IMPLICATION 'i'
 #define EQUIVALENCE 'e'
 
+// Expression states
+#define GOOD_EXPRESSION_STATE 0
+#define BAD_CHAR_STATE 1
+#define PARENTHESES_MISSCOUNT_STATE 2
+#define FIRST_LAST_FAULT_STATE 3
+#define CONNECTORS_PARENTHESES_FAULT_STATE 4
+#define BAD_COMBO_STATE 5
+
 class WordLogic {
     private:
 
@@ -35,17 +43,28 @@ class WordLogic {
         int negations;
         int connectors;
 
+        int exprState;
+
+
         // Initializes the tree.
         void initTree() {
             std::string left, right;
-            int doom = findDoom();
+            int doom, rightParen, atom;
 
-            if (doom != -1) {
+            if ((doom = findDoom()) != -1) {
                 left = expression.substr(1, doom - 1);
                 right = expression.substr(doom + 1, expression.size() - 1 - doom);
 
+                expression = expression[doom];
                 leftNode = new WordLogic(left);
                 rightNode = new WordLogic(right);
+            
+            } else if ((doom = findNegation()) != -1 && (rightParen = findNextParentheses(doom)) != -1) {
+                leftNode = new WordLogic(expression.substr(doom + 1, rightParen - doom));
+                expression = expression[doom];
+
+            } else if ((atom = findAtom()) != -1) {
+                expression = expression[atom];
             }
         }
 
@@ -81,6 +100,31 @@ class WordLogic {
 
                 else if (elemType == RIGHT_PARENTHESES_TYPE)
                     parentheses--;
+            }
+            return -1;
+        }
+
+        int findNegation() {
+            for (int i = 0; i < expression.size(); i++) {
+                if (elementType(expression[i]) == CONNECTOR1_TYPE)
+                    return i;
+            }
+            return -1;
+        }
+
+        int findAtom() {
+            for (int i = 0; i < expression.size(); i++) {
+                if (elementType(expression[i]) == ATOM_TYPE)
+                    return i;
+            }
+            return -1;
+        }
+
+        int findNextParentheses(int i) {
+            while (i < expression.size()) {
+                if (expression[i] == ')')
+                    return i;
+                i++;
             }
             return -1;
         }
@@ -158,6 +202,50 @@ class WordLogic {
             delete tree;
         }
 
+        /* Checks if the expression follows the general rules.
+         * return value: true if the expression folows the rules or false otherwise.
+         * leftParentheses must be equal to rightParentheses.
+         * The expression must not be empty and it must start with '(' and end with ')'.
+         * Neighboring characters must be a combo (see isCombo()).
+        */
+        int expressionState() {
+
+            if (leftParentheses == 0 && rightParentheses == 0 && atoms == 1)
+                return GOOD_EXPRESSION_STATE;
+            
+            if (rightParentheses != leftParentheses)
+                return PARENTHESES_MISSCOUNT_STATE;
+            
+            if (expression.empty() || expression.front() != '(' || expression.back() != ')')
+                return FIRST_LAST_FAULT_STATE;
+
+            if (connectors + negations != leftParentheses)
+                return CONNECTORS_PARENTHESES_FAULT_STATE;
+            
+            std::string::iterator it1, it2;
+            int currentType;
+            int nextType;
+
+            it1 = expression.begin();
+            it2 = it1 + 1;
+
+            while (it1 != expression.end() - 1) {
+                currentType = elementType(*it1);
+                nextType = elementType(*it2);
+
+                if (currentType == NO_TYPE || nextType == NO_TYPE)
+                    return BAD_CHAR_STATE;
+
+                if (!isCombo(currentType, nextType))
+                    return BAD_COMBO_STATE;
+
+                it1 = it2;
+                ++it2;
+            }
+
+            return GOOD_EXPRESSION_STATE;
+        }
+
     public:
 
         // Constructor.
@@ -173,55 +261,29 @@ class WordLogic {
             connectors = 0;
             
             initExpressionProperties();
-            initTree();
+            exprState = expressionState();
+            if (exprState == GOOD_EXPRESSION_STATE)
+                initTree();
+        }
+
+        std::string getExpressionStateMessage() {
+            switch (exprState) {
+                case GOOD_EXPRESSION_STATE:
+                    return "The expression is good";
+                case BAD_CHAR_STATE:
+                    return "Invalid char found";
+                case PARENTHESES_MISSCOUNT_STATE:
+                    return "Missing a parenthesis";
+                case CONNECTORS_PARENTHESES_FAULT_STATE:
+                    return "Connector parenthesis relation unfulfiled";
+                case BAD_COMBO_STATE:
+                    return "Expression does not follow every rule";
+            }
+            return "Something bad!";
         }
 
         ~WordLogic() {
             freeTree(this);
-        }
-
-        /* Checks if the expression follows the general rules.
-         * return value: true if the expression folows the rules or false otherwise.
-         * leftParentheses must be equal to rightParentheses.
-         * The expression must not be empty and it must start with '(' and end with ')'.
-         * Neighboring characters must be a combo (see isCombo()).
-        */
-        bool isExpression() {
-
-            if (leftParentheses == 0 && rightParentheses == 0 && atoms == 1)
-                return true;
-            
-            if (rightParentheses != leftParentheses)
-                return false;
-            
-            if (expression.empty() || expression.front() != '(' || expression.back() != ')')
-                return false;
-
-            if (connectors + negations != leftParentheses)
-                return false;
-            
-            std::string::iterator it1, it2;
-            int currentType;
-            int nextType;
-
-            it1 = expression.begin();
-            it2 = it1 + 1;
-
-            while (it1 != expression.end() - 1) {
-                currentType = elementType(*it1);
-                nextType = elementType(*it2);
-
-                if (currentType == NO_TYPE || nextType == NO_TYPE)
-                    return false;
-
-                if (!isCombo(currentType, nextType))
-                    return false;
-
-                it1 = it2;
-                ++it2;
-            }
-
-            return true;
         }
 
         void printTree() {
