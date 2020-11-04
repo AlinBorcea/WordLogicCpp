@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "word_logic.h"
+#include "wordLogic/word_logic.h"
 
 int main() {
     std::ifstream in("input.txt");
