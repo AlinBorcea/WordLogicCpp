@@ -207,6 +207,22 @@ class Expression {
             return expr.substr(doom + 1);
         }
 
+        std::string getExpressionStateMessage() {
+            switch (Expression::exprState) {
+                case GOOD_EXPRESSION_STATE:
+                    return "The expression is good";
+                case BAD_CHAR_STATE:
+                    return "Invalid char found";
+                case PARENTHESES_MISSCOUNT_STATE:
+                    return "Missing a parenthesis";
+                case CONNECTORS_PARENTHESES_FAULT_STATE:
+                    return "Connector parenthesis relation unfulfiled";
+                case BAD_COMBO_STATE:
+                    return "Expression does not follow every rule";
+            }
+            return "Something bad!";
+        }
+
 };
 
 #endif

@@ -9,6 +9,7 @@ class WordLogic : public Expression {
         // Binary tree.
         WordLogic *leftNode;
         WordLogic *rightNode;
+        bool interp[26];
 
         // Initializes the tree.
         void initTree() {
@@ -47,6 +48,28 @@ class WordLogic : public Expression {
             delete tree;
         }
 
+        bool evaluate(WordLogic *tree, bool interpretation[26]) {
+            if (elementType(tree->expr[0]) == ATOM_TYPE)
+                return interpretation[(int) tree->expr[0] - 65];
+
+            switch (tree->expr[0]) {
+                case NEGATION:
+                    return !evaluate(tree->leftNode, interpretation);
+                case CONJUNCTION:
+                    return evaluate(tree->leftNode, interpretation) && evaluate(tree->rightNode, interpretation);
+                case DISJUNCTION:
+                    return evaluate(tree->leftNode, interpretation) || evaluate(tree->rightNode, interpretation);
+                case IMPLICATION:
+                    return !evaluate(tree->leftNode, interpretation) || evaluate(tree->rightNode, interpretation);
+                case EQUIVALENCE:
+                    bool F = evaluate(tree->leftNode, interpretation);
+                    bool G = evaluate(tree->rightNode, interpretation);
+                    return (!F || G) && (!G || F);
+
+            }
+            return true; // It should not get here!
+        }
+
     public:
 
         // Constructor.
@@ -59,24 +82,17 @@ class WordLogic : public Expression {
             freeTree(this);
         }
 
+        void setInterpretation(bool interpretation[26]) {
+            for (int i = 0; i < 26; i++)
+                interp[i] = interpretation[i];
+        }
+
         void printTree() {
             printNodes(this);
         }
 
-        std::string getExpressionStateMessage() {
-            switch (Expression::exprState) {
-                case GOOD_EXPRESSION_STATE:
-                    return "The expression is good";
-                case BAD_CHAR_STATE:
-                    return "Invalid char found";
-                case PARENTHESES_MISSCOUNT_STATE:
-                    return "Missing a parenthesis";
-                case CONNECTORS_PARENTHESES_FAULT_STATE:
-                    return "Connector parenthesis relation unfulfiled";
-                case BAD_COMBO_STATE:
-                    return "Expression does not follow every rule";
-            }
-            return "Something bad!";
+        bool getTruthValue() {
+            return evaluate(this, interp);
         }
 
 };
