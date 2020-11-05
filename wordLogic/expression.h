@@ -58,6 +58,7 @@ class Expression {
 
     public:
         Expression(std::string expression) {
+            expr = "";
             expr = expression;
             rightParentheses = 0;
             leftParentheses = 0;
@@ -89,9 +90,12 @@ class Expression {
         }
 
         int findNext(int start, int type) {
-            while (start < expr.size() && elementType(expr[start]) != type)
+            while (start < expr.size()) {
+                if (elementType(expr[start]) == type)
+                    return start;
                 start++;
-            return start > expr.size() ? -1 : start;
+            }
+            return -1;
         }
 
         int elementType(char element) {
@@ -115,7 +119,6 @@ class Expression {
 
         // Returns true if two consecutive elements follow order rules.
         bool isCombo(int currentType, int nextType) {
-            
             switch (currentType) {
 
                 case LEFT_PARENTHESES_TYPE:
@@ -170,8 +173,8 @@ class Expression {
             if (expr.empty() || expr.front() != '(' || expr.back() != ')')
                 return FIRST_LAST_FAULT_STATE;
 
-            if (connectors + negations != leftParentheses)
-                return CONNECTORS_PARENTHESES_FAULT_STATE;
+            //if (connectors + negations != leftParentheses)
+                //return CONNECTORS_PARENTHESES_FAULT_STATE;
             
             std::string::iterator it1, it2;
             int currentType;
@@ -194,6 +197,14 @@ class Expression {
                 ++it2;
             }
             return GOOD_EXPRESSION_STATE;
+        }
+
+        std::string getLeftOfDoom(int doom) {
+            return expr.substr(1, doom - 1);
+        }
+
+        std::string getRightOfDoom(int doom) {
+            return expr.substr(doom + 1);
         }
 
 };

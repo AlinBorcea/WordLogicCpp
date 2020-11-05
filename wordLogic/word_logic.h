@@ -6,7 +6,6 @@
 
 class WordLogic : public Expression {
     private:
-
         // Binary tree.
         WordLogic *leftNode;
         WordLogic *rightNode;
@@ -14,29 +13,29 @@ class WordLogic : public Expression {
         // Initializes the tree.
         void initTree() {
             std::string left, right;
-            int doom, rightParen, atom;
+            int doom;
 
-            if ((doom = findDoom()) != -1) {
-                left = Expression::expr.substr(1, doom - 1);
-                right = Expression::expr.substr(doom + 1, Expression::expr.size() - 1 - doom);
+            if ((doom = Expression::findDoom()) != -1) {
+                left = Expression::getLeftOfDoom(doom);
+                right = Expression::getRightOfDoom(doom);
 
-                Expression::expr = Expression::expr[doom];
                 leftNode = new WordLogic(left);
                 rightNode = new WordLogic(right);
-            
-            } else if ((doom = Expression::findNext(0, NEGATION)) != -1 && 
-            (rightParen = Expression::findNext(0, RIGHT_PARENTHESES_TYPE)) != -1) {
-                leftNode = new WordLogic(Expression::expr.substr(doom + 1, rightParen - doom));
                 Expression::expr = Expression::expr[doom];
 
-            } else if ((atom = Expression::findNext(0, ATOM_TYPE)) != -1) {
-                Expression::expr = Expression::expr[atom];
+            } else if ((doom = Expression::findNext(0, CONNECTOR1_TYPE)) != -1) {
+                left = Expression::expr.substr(doom + 1);
+                Expression::expr = Expression::expr[doom];
+                leftNode = new WordLogic(left);
+
+            } else if ((doom = Expression::findNext(0, ATOM_TYPE)) != -1) {
+                Expression::expr = Expression::expr[doom];
             }
         }
 
         void printNodes(WordLogic *tree) {
             if (!tree) return;
-            std::cout << tree->Expression::expr << '\n';
+            std::cout << tree->expr << '\n';
             printNodes(tree->leftNode);
             printNodes(tree->rightNode);
         }
@@ -52,8 +51,8 @@ class WordLogic : public Expression {
 
         // Constructor.
         WordLogic(std::string expr) : Expression(expr) {
-            if (Expression::exprState == GOOD_EXPRESSION_STATE)
-                initTree();
+            leftNode = rightNode = 0;
+            initTree();
         }
 
         ~WordLogic() {

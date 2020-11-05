@@ -8,6 +8,7 @@ int main() {
     std::string str;
     std::getline(in, str);
 
+    std::cout << str << '\n';
     WordLogic *wordLogic = new WordLogic(str);
     std::cout << wordLogic->getExpressionStateMessage() << std::endl;
     wordLogic->printTree();
